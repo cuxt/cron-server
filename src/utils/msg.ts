@@ -2,6 +2,9 @@ export async function msg (env: Env, message: any) {
   const baseurl = env.URL;
   const url = baseurl + '/msg/admin/corp';
 
+  const from = env.CORP;
+
+  message.from = from;
   const res = await fetch(url, {
     method: 'POST',
     headers: {
@@ -12,5 +15,4 @@ export async function msg (env: Env, message: any) {
 
   const data = await res.json();
   console.log(data);
-
 }
