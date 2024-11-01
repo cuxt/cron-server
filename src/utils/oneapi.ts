@@ -7,12 +7,12 @@ export async function keep (env: Env) {
   try {
     const response = await fetch(url);
 
-    const message = {
-      "title": "OneAPI",
-      "desc": "Success",
-      "content": `${response.status} ${response.statusText}`
-    };
-    await msg(env, message);
+    // const message = {
+    //   "title": "OneAPI",
+    //   "desc": "Success",
+    //   "content": `${response.status} ${response.statusText}`
+    // };
+    // await msg(env, message);
     console.log(response);
   } catch (error) {
     console.log(error)
