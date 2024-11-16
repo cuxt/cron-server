@@ -1,10 +1,12 @@
-export async function msg (env: Env, message: any) {
+export async function msg (env: Env, message: any, level: string = 'hign') {
   const baseurl = env.URL;
   const url = baseurl + '/msg/admin/corp';
-
   const from = env.CORP;
 
-  message.from = from;
+  if (level === 'low') {
+    message.from = from;
+  }
+
   const res = await fetch(url, {
     method: 'POST',
     headers: {
