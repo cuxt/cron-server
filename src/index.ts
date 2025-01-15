@@ -14,8 +14,6 @@ export default {
 		switch (controller.cron) {
 			case "0 1 * * *":
 				// 上海时间：9：00
-				await RainYun.checkin(env);
-				await NewAPI.signing(env);
 				break;
 			case "*/20 1-13 * * *":
 				// 上海时间：9:00 - 21:00 每20分钟执行一次

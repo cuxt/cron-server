@@ -16,7 +16,7 @@ export async function checkin (env: Env) {
     headers
   })
   const userInfoJson = await userInfo.json() as any;
-
+  
   // 签到
   const payload = {
     'task_name': '每日签到'
@@ -27,7 +27,8 @@ export async function checkin (env: Env) {
     body: JSON.stringify(payload)
   })
   const checkinJson = await checkin.json() as any;
-
+  console.log(checkinJson);
+  
   // 再次获取用户信息
   const userInfo2 = await fetch(baseurl, {
     headers
