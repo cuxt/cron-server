@@ -1,23 +1,17 @@
 #:schema node_modules/wrangler/config-schema.json
 name = "cron-server"
 main = "src/index.ts"
-compatibility_date = "2024-10-31"
+compatibility_date = "2025-04-29"
 
 [triggers]
-crons = ["0 1 * * *", "*/20 1-13 * * *", "0 0 * * 1"]
+crons = ["* * * * *"]
+
+[[kv_namespaces]]
+binding = "BINDING_NAME"
+id = "xxx"
 
 [observability]
 enabled = true
 
 [vars]
-URL = ''
-# 雨云
-RAINYUN_API = ''
-# 企业微信
-CORP = ""
-# Serv00
-SERV00 = '''
-[
-  {"username": "xxx", "password": "xxx","panel":"3"},
-]
-'''
+AUTH='xxx'

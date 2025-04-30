@@ -1,0 +1,1595 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Cron Server</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+	<style>
+		:root {
+			--primary-color: #3498db;
+			--secondary-color: #9b59b6;
+			--accent-color: #2ecc71;
+			--text-color: #34495e;
+			--light-color: #ecf0f1;
+			--sidebar-width: 280px;
+			--header-height: 70px;
+			--card-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+			--card-bg: rgba(255, 255, 255, 0.9);
+			--transition-speed: 0.3s;
+		}
+
+		* {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 0;
+		}
+
+		body {
+			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+			min-height: 100vh;
+			background: linear-gradient(135deg, #f6f9fc 0%, #dfe6e9 100%);
+			color: var(--text-color);
+			position: relative;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+		}
+
+		.app-wrapper {
+			display: flex;
+			flex-direction: column;
+			flex: 1;
+			height: 100vh;
+			overflow: hidden;
+		}
+
+		/* 侧边栏样式 */
+		.sidebar {
+			width: var(--sidebar-width);
+			background: var(--card-bg);
+			box-shadow: var(--card-shadow);
+			backdrop-filter: blur(10px);
+			border-right: 1px solid rgba(255, 255, 255, 0.6);
+			display: flex;
+			flex-direction: column;
+			transition: transform var(--transition-speed);
+			z-index: 10;
+		}
+
+		.sidebar-header {
+			padding: 1.5rem;
+			border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.logo-container {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+
+		.logo {
+			font-size: 1.5rem;
+			font-weight: 700;
+			color: var(--primary-color);
+		}
+
+		.sidebar-content {
+			flex: 1;
+			padding: 1.5rem;
+			overflow-y: auto;
+			display: flex;
+			flex-direction: column;
+			gap: 1.5rem;
+		}
+
+		.time-widget {
+			text-align: center;
+			padding: 1rem 0;
+		}
+
+		.clock {
+			font-size: 2rem;
+			color: var(--primary-color);
+			font-weight: 300;
+			letter-spacing: 2px;
+			margin-bottom: 0.5rem;
+		}
+
+		.date {
+			font-size: 1rem;
+			color: var(--text-color);
+			opacity: 0.8;
+		}
+
+		.sidebar-footer {
+			padding: 1rem;
+			border-top: 1px solid rgba(0, 0, 0, 0.05);
+			text-align: center;
+			font-size: 0.8rem;
+			opacity: 0.7;
+		}
+
+		.nav-menu {
+			list-style: none;
+		}
+
+		.nav-item {
+			margin-bottom: 0.5rem;
+		}
+
+		.nav-link {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			padding: 0.8rem 1rem;
+			border-radius: 8px;
+			text-decoration: none;
+			color: var(--text-color);
+			transition: all var(--transition-speed);
+		}
+
+		.nav-link:hover,
+		.nav-link.active {
+			background: rgba(52, 152, 219, 0.1);
+			color: var(--primary-color);
+		}
+
+		.nav-link i {
+			width: 20px;
+			text-align: center;
+		}
+
+		/* 主内容区样式 */
+		.main-content {
+			flex: 1;
+			overflow-y: auto;
+			padding: 1rem;
+			position: relative;
+			width: 100%;
+		}
+
+		.header {
+			padding: 1rem;
+			background: var(--card-bg);
+			box-shadow: var(--card-shadow);
+			border-radius: 10px;
+			margin-bottom: 1.5rem;
+		}
+
+		.page-title {
+			font-size: 1.8rem;
+			font-weight: 600;
+			color: var(--text-color);
+		}
+
+		.header-actions {
+			display: flex;
+			gap: 10px;
+		}
+
+		.search-box {
+			position: relative;
+			width: 300px;
+		}
+
+		.search-box input {
+			width: 100%;
+			padding: 0.6rem 1rem 0.6rem 2.5rem;
+			border-radius: 30px;
+			border: 1px solid rgba(0, 0, 0, 0.1);
+			font-size: 0.9rem;
+			background: rgba(255, 255, 255, 0.8);
+			backdrop-filter: blur(5px);
+		}
+
+		.search-box i {
+			position: absolute;
+			left: 15px;
+			top: 50%;
+			transform: translateY(-50%);
+			color: var(--text-color);
+			opacity: 0.5;
+			z-index: 1;
+		}
+
+		/* 任务列表样式 - 表格布局 */
+		.tasks-container {
+			background: var(--card-bg);
+			border-radius: 10px;
+			box-shadow: var(--card-shadow);
+			overflow: hidden;
+		}
+
+		.tasks-toolbar {
+			padding: 1rem;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+			background: rgba(255, 255, 255, 0.5);
+		}
+
+		.tasks-filters {
+			display: flex;
+			align-items: center;
+			gap: 15px;
+		}
+
+		.filter-dropdown {
+			padding: 0.5rem 1rem;
+			border-radius: 5px;
+			border: 1px solid rgba(0, 0, 0, 0.1);
+			background: white;
+			font-size: 0.9rem;
+		}
+
+		.tasks-table {
+			width: 100%;
+			border-collapse: collapse;
+		}
+
+		.tasks-table th,
+		.tasks-table td {
+			padding: 1rem;
+			text-align: left;
+			border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+		}
+
+		.tasks-table th {
+			font-weight: 600;
+			background: rgba(255, 255, 255, 0.5);
+			position: sticky;
+			top: 0;
+			z-index: 2;
+		}
+
+		.tasks-table tbody tr {
+			transition: background-color var(--transition-speed);
+		}
+
+		.tasks-table tbody tr:hover {
+			background-color: rgba(52, 152, 219, 0.05);
+		}
+
+		.tasks-table .task-inactive {
+			opacity: 0.7;
+		}
+
+		.task-name-cell {
+			font-weight: 500;
+			max-width: 250px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		.task-actions-cell {
+			white-space: nowrap;
+		}
+
+		/* 保留原来的其他样式 */
+		.container {
+			width: 100%;
+			max-width: 1200px;
+			margin: 0 auto;
+		}
+
+		.card {
+			background: var(--card-bg);
+			border-radius: 16px;
+			box-shadow: var(--card-shadow);
+			padding: 1.5rem;
+			margin-bottom: 1.5rem;
+			backdrop-filter: blur(10px);
+			border: 1px solid rgba(255, 255, 255, 0.6);
+			position: relative;
+			overflow: hidden;
+			transition: transform 0.3s ease, box-shadow 0.3s ease;
+		}
+
+		.welcome-text {
+			font-size: 2rem;
+			font-weight: 700;
+			margin-bottom: 1rem;
+			background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+			-webkit-background-clip: text;
+			-webkit-text-fill-color: transparent;
+			text-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+		}
+
+		/* 按钮样式 */
+		.btn {
+			background: var(--primary-color);
+			color: white;
+			border: none;
+			padding: 0.5rem 1rem;
+			border-radius: 30px;
+			cursor: pointer;
+			font-size: 0.9rem;
+			display: inline-flex;
+			align-items: center;
+			gap: 5px;
+			transition: all 0.2s ease;
+		}
+
+		.btn:hover {
+			opacity: 0.9;
+			transform: translateY(-2px);
+		}
+
+		.btn-secondary {
+			background: var(--secondary-color);
+		}
+
+		.btn-accent {
+			background: var(--accent-color);
+		}
+
+		.btn-danger {
+			background: #e74c3c;
+		}
+
+		.btn-sm {
+			padding: 0.3rem 0.8rem;
+			font-size: 0.8rem;
+		}
+
+		.status-badge {
+			padding: 0.2rem 0.6rem;
+			border-radius: 20px;
+			font-size: 0.7rem;
+			font-weight: 600;
+			text-transform: uppercase;
+		}
+
+		.status-success {
+			background: #d4f8e8;
+			color: #1b8057;
+		}
+
+		.status-error {
+			background: #ffe1e1;
+			color: #d63031;
+		}
+
+		.status-pending {
+			background: #fff8e1;
+			color: #ff9800;
+		}
+
+		/* 模态窗口样式 */
+		.modal {
+			position: fixed;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: rgba(0, 0, 0, 0.6);
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			z-index: 1000;
+			opacity: 0;
+			visibility: hidden;
+			transition: all 0.3s ease;
+		}
+
+		.modal.active {
+			opacity: 1;
+			visibility: visible;
+		}
+
+		.modal-content {
+			background: white;
+			border-radius: 10px;
+			padding: 2rem;
+			width: 90%;
+			max-width: 600px;
+			max-height: 90vh;
+			overflow-y: auto;
+			transform: translateY(-20px);
+			transition: transform 0.3s ease;
+			box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+		}
+
+		.modal.active .modal-content {
+			transform: translateY(0);
+		}
+
+		/* 模态窗口样式增强 */
+		.modal-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 1.5rem;
+			padding-bottom: 1rem;
+			border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+		}
+
+		.modal-title {
+			margin: 0;
+			color: var(--text-color);
+			font-weight: 600;
+		}
+
+		.close-modal {
+			background: none;
+			border: none;
+			font-size: 1.5rem;
+			cursor: pointer;
+			opacity: 0.7;
+			transition: opacity 0.2s;
+			padding: 0;
+			margin: 0;
+			line-height: 1;
+		}
+
+		.close-modal:hover {
+			opacity: 1;
+		}
+
+		.form-group {
+			margin-bottom: 1.2rem;
+		}
+
+		.form-label {
+			display: block;
+			margin-bottom: 0.5rem;
+			font-weight: 500;
+			color: var(--text-color);
+		}
+
+		.form-control {
+			width: 100%;
+			padding: 0.6rem 1rem;
+			border-radius: 8px;
+			border: 1px solid rgba(0, 0, 0, 0.15);
+			font-size: 0.95rem;
+			transition: border-color 0.2s;
+			background: white;
+		}
+
+		.form-control:focus {
+			outline: none;
+			border-color: var(--primary-color);
+			box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.25);
+		}
+
+		textarea.form-control {
+			resize: vertical;
+		}
+
+		.form-switch {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+
+		.switch {
+			position: relative;
+			display: inline-block;
+			width: 48px;
+			height: 24px;
+		}
+
+		.switch input {
+			opacity: 0;
+			width: 0;
+			height: 0;
+		}
+
+		.slider {
+			position: absolute;
+			cursor: pointer;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background-color: #ccc;
+			transition: .3s;
+			border-radius: 24px;
+		}
+
+		.slider:before {
+			position: absolute;
+			content: "";
+			height: 18px;
+			width: 18px;
+			left: 3px;
+			bottom: 3px;
+			background-color: white;
+			transition: .3s;
+			border-radius: 50%;
+		}
+
+		input:checked+.slider {
+			background-color: var(--accent-color);
+		}
+
+		input:checked+.slider:before {
+			transform: translateX(24px);
+		}
+
+		.form-actions {
+			display: flex;
+			justify-content: flex-end;
+			gap: 10px;
+			margin-top: 2rem;
+		}
+
+		small {
+			display: block;
+			margin-top: 0.3rem;
+			color: rgba(0, 0, 0, 0.5);
+		}
+
+		.log-item {
+			background: rgba(0, 0, 0, 0.02);
+			border-radius: 8px;
+			padding: 0.8rem 1rem;
+			margin-bottom: 0.8rem;
+			border-left: 3px solid var(--primary-color);
+		}
+
+		.loading {
+			display: flex;
+			justify-content: center;
+			padding: 2rem;
+		}
+
+		.spinner {
+			width: 40px;
+			height: 40px;
+			border: 3px solid rgba(0, 0, 0, 0.1);
+			border-radius: 50%;
+			border-top-color: var(--primary-color);
+			animation: spin 1s ease-in-out infinite;
+		}
+
+		@keyframes spin {
+			to {
+				transform: rotate(360deg);
+			}
+		}
+
+		.text-center {
+			text-align: center;
+			padding: 1rem;
+			color: rgba(0, 0, 0, 0.5);
+		}
+
+		/* 通知栏样式修复 */
+		.notification-bar {
+			position: fixed;
+			bottom: 20px;
+			right: 20px;
+			padding: 0.8rem 1.5rem;
+			border-radius: 8px;
+			background: white;
+			color: var(--text-color);
+			box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+			z-index: 1100;
+			transition: transform 0.3s ease, opacity 0.3s;
+			transform: translateX(120%);
+			opacity: 0;
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			max-width: 80%;
+			word-break: break-word;
+		}
+
+		.notification-bar.success {
+			background: #d4edda;
+			color: #155724;
+			border-left: 4px solid #28a745;
+		}
+
+		.notification-bar.error {
+			background: #f8d7da;
+			color: #721c24;
+			border-left: 4px solid #dc3545;
+		}
+
+		.notification-bar.show {
+			transform: translateX(0);
+			opacity: 1;
+		}
+
+		/* 新布局样式 - 无侧边栏 */
+		.app-wrapper {
+			display: flex;
+			flex-direction: column;
+			flex: 1;
+			height: 100vh;
+			overflow: hidden;
+		}
+
+		.main-content {
+			flex: 1;
+			overflow-y: auto;
+			padding: 1rem;
+			position: relative;
+			width: 100%;
+		}
+
+		.header {
+			padding: 1rem;
+			background: var(--card-bg);
+			box-shadow: var(--card-shadow);
+			border-radius: 10px;
+			margin-bottom: 1.5rem;
+		}
+
+		.header-container {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+
+		.header-left {
+			display: flex;
+			align-items: center;
+			gap: 1rem;
+		}
+
+		.logo-container {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+
+		.logo {
+			font-size: 1.5rem;
+			font-weight: 700;
+			color: var(--primary-color);
+		}
+
+		.header-actions {
+			display: flex;
+			align-items: center;
+			gap: 15px;
+		}
+
+		.action-icons {
+			display: flex;
+			gap: 10px;
+		}
+
+		.icon-btn {
+			background: none;
+			border: none;
+			font-size: 1.1rem;
+			color: var(--text-color);
+			cursor: pointer;
+			padding: 0.5rem;
+			border-radius: 50%;
+			transition: all 0.2s;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			width: 36px;
+			height: 36px;
+		}
+
+		.icon-btn:hover {
+			background: rgba(52, 152, 219, 0.1);
+			color: var(--primary-color);
+		}
+
+		.task-stats {
+			display: flex;
+			gap: 1.5rem;
+			margin-top: 1rem;
+		}
+
+		.stat-item {
+			background: rgba(255, 255, 255, 0.5);
+			padding: 0.5rem 1rem;
+			border-radius: 8px;
+			font-size: 0.9rem;
+		}
+
+		.stat-value {
+			font-weight: bold;
+			color: var(--primary-color);
+		}
+	</style>
+</head>
+
+<body>
+	<div class="notification-bar" id="notification">
+		<i class="fas fa-info-circle"></i>
+		<span id="notification-text">通知信息</span>
+	</div>
+
+	<div class="app-wrapper">
+		<!-- 主内容区 -->
+		<main class="main-content">
+			<div class="header">
+				<div class="header-container">
+					<div class="header-left">
+						<div class="logo-container">
+							<i class="fas fa-tasks"></i>
+							<div class="logo">Cron Server</div>
+						</div>
+					</div>
+					<div class="header-actions">
+						<div class="search-box">
+							<i class="fas fa-search"></i>
+							<input type="text" placeholder="搜索任务..." id="searchTasks">
+						</div>
+						<div class="action-icons">
+							<button class="icon-btn" id="refreshTasksBtn" title="刷新任务列表">
+								<i class="fas fa-sync-alt"></i>
+							</button>
+							<button class="icon-btn" id="settingsBtn" title="系统设置">
+								<i class="fas fa-cog"></i>
+							</button>
+							<button class="btn" id="addTaskBtn"><i class="fas fa-plus"></i> 添加任务</button>
+						</div>
+					</div>
+				</div>
+
+				<div class="task-stats">
+					<div class="stat-item">总任务数: <span id="totalTasksCount" class="stat-value">0</span></div>
+					<div class="stat-item">激活任务: <span id="activeTasksCount" class="stat-value">0</span></div>
+					<div class="stat-item">执行成功率: <span id="successRate" class="stat-value">0%</span></div>
+				</div>
+			</div>
+
+			<div class="tasks-container">
+				<div class="tasks-toolbar">
+					<div class="tasks-filters">
+						<select class="filter-dropdown" id="statusFilter">
+							<option value="all">所有状态</option>
+							<option value="active">已激活</option>
+							<option value="inactive">已停用</option>
+						</select>
+						<select class="filter-dropdown" id="typeFilter">
+							<option value="all">所有类型</option>
+							<option value="url">URL 请求</option>
+							<option value="curl">CURL 命令</option>
+						</select>
+					</div>
+					<div>
+						总计: <span id="filteredCount">0</span> 个任务
+					</div>
+				</div>
+
+				<div class="tasks-table-container">
+					<table class="tasks-table" id="tasksTable">
+						<thead>
+							<tr>
+								<th>名称</th>
+								<th>类型</th>
+								<th>状态</th>
+								<th>间隔</th>
+								<th>最近执行</th>
+								<th>操作</th>
+							</tr>
+						</thead>
+						<tbody id="taskList">
+							<tr>
+								<td colspan="6">
+									<div class="loading">
+										<div class="spinner"></div>
+									</div>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</main>
+	</div>
+
+	<!-- 保留原有的模态窗口 -->
+	<!-- 添加/编辑任务模态窗口 -->
+	<div class="modal" id="taskModal">
+		<!-- 保持原有模态窗口内容 -->
+		<div class="modal-content">
+			<div class="modal-header">
+				<h3 class="modal-title" id="taskModalTitle">添加新任务</h3>
+				<button class="close-modal" id="closeTaskModal">&times;</button>
+			</div>
+			<form id="taskForm">
+				<input type="hidden" id="taskId">
+				<div class="form-group">
+					<label for="taskName" class="form-label">任务名称</label>
+					<input type="text" id="taskName" class="form-control" required placeholder="输入任务名称">
+				</div>
+				<div class="form-group">
+					<label for="taskType" class="form-label">任务类型</label>
+					<select id="taskType" class="form-control" required>
+						<option value="url">URL 请求</option>
+						<option value="curl">CURL 命令</option>
+					</select>
+				</div>
+				<div class="form-group">
+					<label for="taskUrl" class="form-label">URL / CURL 命令</label>
+					<input type="text" id="taskUrl" class="form-control" required placeholder="输入 URL 或 CURL 命令">
+				</div>
+				<div class="form-group">
+					<label for="taskInterval" class="form-label">执行间隔 (分钟)</label>
+					<input type="number" id="taskInterval" class="form-control" required min="1" placeholder="执行间隔">
+				</div>
+
+				<div id="urlOptions">
+					<div class="form-group">
+						<label for="taskMethod" class="form-label">请求方法</label>
+						<select id="taskMethod" class="form-control">
+							<option value="GET">GET</option>
+							<option value="POST">POST</option>
+							<option value="PUT">PUT</option>
+							<option value="DELETE">DELETE</option>
+						</select>
+					</div>
+					<div class="form-group">
+						<label for="taskHeaders" class="form-label">请求头 (JSON 格式)</label>
+						<textarea id="taskHeaders" class="form-control" rows="2"
+							placeholder='{"Content-Type": "application/json"}'></textarea>
+					</div>
+					<div class="form-group">
+						<label for="taskBody" class="form-label">请求体</label>
+						<textarea id="taskBody" class="form-control" rows="3" placeholder="请求体内容"></textarea>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label for="taskTimeout" class="form-label">超时时间 (秒)</label>
+					<input type="number" id="taskTimeout" class="form-control" value="30" min="1" placeholder="超时时间">
+				</div>
+
+				<div class="form-group form-switch">
+					<label class="switch">
+						<input type="checkbox" id="taskActive" checked>
+						<span class="slider"></span>
+					</label>
+					<label for="taskActive" class="form-label">任务激活状态</label>
+				</div>
+
+				<div class="form-group form-switch">
+					<label class="switch">
+						<input type="checkbox" id="taskNotify" checked>
+						<span class="slider"></span>
+					</label>
+					<label for="taskNotify" class="form-label">失败时通知</label>
+				</div>
+
+				<div class="form-actions">
+					<button type="button" class="btn btn-secondary" id="cancelTaskBtn">取消</button>
+					<button type="submit" class="btn btn-accent" id="saveTaskBtn">保存</button>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	<!-- 任务详情模态窗口 -->
+	<div class="modal" id="detailModal">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h3 class="modal-title" id="detailModalTitle">任务详情</h3>
+				<button class="close-modal" id="closeDetailModal">&times;</button>
+			</div>
+			<div id="taskDetails">
+				<h4>基本信息</h4>
+				<div class="form-group">
+					<label class="form-label">ID:</label>
+					<div id="detailId"></div>
+				</div>
+				<div class="form-group">
+					<label class="form-label">创建时间:</label>
+					<div id="detailCreated"></div>
+				</div>
+				<div class="form-group">
+					<label class="form-label">最后更新:</label>
+					<div id="detailUpdated"></div>
+				</div>
+
+				<h4>执行历史</h4>
+				<div class="task-logs" id="taskLogs">
+					<div class="loading">
+						<div class="spinner"></div>
+					</div>
+				</div>
+			</div>
+			<div class="form-actions">
+				<button class="btn btn-secondary" id="closeDetailBtn">关闭</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- 设置模态窗口 -->
+	<div class="modal" id="settingsModal">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h3 class="modal-title">系统设置</h3>
+				<button class="close-modal" id="closeSettingsModal">&times;</button>
+			</div>
+			<form id="settingsForm">
+				<div class="form-group">
+					<label for="notificationUrl" class="form-label">通知 URL</label>
+					<input type="url" id="notificationUrl" class="form-control" placeholder="https://example.com/webhook">
+					<small>当任务执行失败时，系统将向此 URL 发送通知。</small>
+				</div>
+				<div class="form-actions">
+					<button type="button" class="btn btn-secondary" id="cancelSettingsBtn">取消</button>
+					<button type="submit" class="btn btn-accent" id="saveSettingsBtn">保存</button>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	<!-- 登录模态窗口 -->
+	<div class="modal" id="loginModal">
+		<div class="modal-content" style="max-width: 400px;">
+			<div class="modal-header">
+				<h3 class="modal-title">登录系统</h3>
+			</div>
+			<form id="loginForm">
+				<div class="form-group">
+					<label for="password" class="form-label">系统密码</label>
+					<input type="password" id="password" class="form-control" required placeholder="请输入密码">
+					<small id="loginError" class="error-text" style="color: #e74c3c; display: none;">密码错误，请重试</small>
+				</div>
+				<div class="form-group">
+					<div class="form-switch">
+						<label class="switch">
+							<input type="checkbox" id="rememberMe">
+							<span class="slider"></span>
+						</label>
+						<label for="rememberMe" class="form-label">记住登录状态</label>
+					</div>
+				</div>
+				<div class="form-actions">
+					<button type="submit" class="btn btn-accent" style="width: 100%;" id="loginButton">登录</button>
+				</div>
+			</form>
+		</div>
+	</div>
+
+	<script>
+		// 任务管理系统功能
+		let tasks = [];
+		const API_BASE = '/api';
+		let authToken = null;
+
+		// 检查登录状态
+		function checkLoginStatus() {
+			const token = localStorage.getItem('authToken');
+			if (!token) return false;
+
+			authToken = token;
+			return true;
+		}
+
+		// 显示登录窗口
+		function showLoginModal() {
+			const modal = document.getElementById('loginModal');
+			modal.classList.add('active');
+
+			// 防止关闭
+			document.getElementById('loginModal').addEventListener('click', function(e) {
+				if (e.target === this) {
+					e.stopPropagation(); // 阻止冒泡
+					return false; // 阻止默认行为
+				}
+			});
+
+			// 重置表单
+			document.getElementById('password').value = '';
+			document.getElementById('loginError').style.display = 'none';
+		}
+
+		// 处理登录表单提交
+		async function handleLogin(e) {
+			e.preventDefault();
+
+			const password = document.getElementById('password').value;
+			const rememberMe = document.getElementById('rememberMe').checked;
+			const loginButton = document.getElementById('loginButton');
+			const loginError = document.getElementById('loginError');
+
+			// 禁用登录按钮，显示加载状态
+			loginButton.disabled = true;
+			loginButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 登录中...';
+			loginError.style.display = 'none';
+
+			try {
+				const response = await fetch(`${API_BASE}/auth/login`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ password })
+				});
+
+				const data = await response.json();
+
+				if (response.ok && data.token) {
+					// 保存 token
+					authToken = data.token;
+
+					// 如果选择记住登录，存储到 localStorage
+					if (rememberMe) {
+						localStorage.setItem('authToken', authToken);
+					} else {
+						// 使用会话存储，浏览器关闭后失效
+						sessionStorage.setItem('authToken', authToken);
+					}
+
+					document.getElementById('loginModal').classList.remove('active');
+					initAppAfterLogin();
+				} else {
+					// 显示错误信息
+					loginError.textContent = data.error || '登录失败，请重试';
+					loginError.style.display = 'block';
+					document.getElementById('password').value = '';
+					document.getElementById('password').focus();
+				}
+			} catch (error) {
+				console.error('登录请求失败:', error);
+				loginError.textContent = '登录失败，请检查网络连接';
+				loginError.style.display = 'block';
+			} finally {
+				// 恢复登录按钮状态
+				loginButton.disabled = false;
+				loginButton.innerHTML = '登录';
+			}
+		}
+
+		// 初始化应用（在登录成功后）
+		function initAppAfterLogin() {
+			setupSearchAndFilters();
+			fetchTasks();
+		}
+
+		// 为所有API请求添加认证头
+		async function fetchWithAuth(url, options = {}) {
+			if (!authToken) {
+				throw new Error('未登录');
+			}
+
+			const authOptions = {
+				...options,
+				headers: {
+					...options.headers,
+					'Authorization': `Bearer ${authToken}`
+				}
+			};
+
+			const response = await fetch(url, authOptions);
+
+			// 如果返回 401 未授权，可能是 token 过期
+			if (response.status === 401) {
+				localStorage.removeItem('authToken');
+				sessionStorage.removeItem('authToken');
+				authToken = null;
+				showLoginModal();
+				throw new Error('登录已过期，请重新登录');
+			}
+
+			return response;
+		}
+
+		// 显示通知
+		function showNotification(message, type = 'success') {
+			const notification = document.getElementById('notification');
+			const notificationText = document.getElementById('notification-text');
+
+			notification.className = 'notification-bar ' + type;
+			notificationText.textContent = message;
+
+			notification.classList.add('show');
+
+			setTimeout(() => {
+				notification.classList.remove('show');
+			}, 3000);
+		}
+
+		// 获取所有任务
+		async function fetchTasks() {
+			try {
+				const response = await fetchWithAuth(`${API_BASE}/tasks`);
+				if (!response.ok) throw new Error('获取任务失败');
+
+				const data = await response.json();
+				tasks = Object.values(data);
+				renderTasks();
+				updateTaskStats();
+			} catch (error) {
+				console.error('获取任务失败:', error);
+				showNotification('获取任务失败: ' + error.message, 'error');
+			}
+		}
+
+		// 更新任务统计信息
+		function updateTaskStats() {
+			const totalTasks = tasks.length;
+			const activeTasks = tasks.filter(task => task.active).length;
+
+			// 计算成功率
+			let successfulTasks = 0;
+			let tasksWithLogs = 0;
+
+			tasks.forEach(task => {
+				if (task.logs && task.logs.length > 0) {
+					tasksWithLogs++;
+					if (task.logs[0].ok) {
+						successfulTasks++;
+					}
+				}
+			});
+
+			const successRate = tasksWithLogs > 0 ? Math.round((successfulTasks / tasksWithLogs) * 100) : 0;
+
+			document.getElementById('totalTasksCount').textContent = totalTasks;
+			document.getElementById('activeTasksCount').textContent = activeTasks;
+			document.getElementById('successRate').textContent = `${successRate}%`;
+		}
+
+		// 渲染任务列表 - 表格布局
+		function renderTasks() {
+			const taskList = document.getElementById('taskList');
+			const statusFilter = document.getElementById('statusFilter').value;
+			const typeFilter = document.getElementById('typeFilter').value;
+			const searchQuery = document.getElementById('searchTasks').value.toLowerCase();
+
+			if (tasks.length === 0) {
+				taskList.innerHTML = '<tr><td colspan="6" class="text-center">暂无任务，点击"添加任务"按钮创建新任务。</td></tr>';
+				document.getElementById('filteredCount').textContent = '0';
+				return;
+			}
+
+			// 排序并过滤任务
+			let filteredTasks = [...tasks];
+
+			// 应用过滤器
+			if (statusFilter !== 'all') {
+				const isActive = statusFilter === 'active';
+				filteredTasks = filteredTasks.filter(task => task.active === isActive);
+			}
+
+			if (typeFilter !== 'all') {
+				filteredTasks = filteredTasks.filter(task => task.type === typeFilter);
+			}
+
+			if (searchQuery) {
+				filteredTasks = filteredTasks.filter(task =>
+					task.name.toLowerCase().includes(searchQuery) ||
+					task.url.toLowerCase().includes(searchQuery)
+				);
+			}
+
+			// 更新过滤后的任务数量
+			document.getElementById('filteredCount').textContent = filteredTasks.length;
+
+			// 按更新时间排序，最新的在前面
+			filteredTasks.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+
+			let html = '';
+			filteredTasks.forEach(task => {
+				const lastLog = task.logs && task.logs.length > 0 ? task.logs[0] : null;
+				let statusClass = '';
+				let statusText = '未执行';
+				let lastRunTime = '从未执行';
+
+				if (lastLog) {
+					statusClass = lastLog.ok ? 'status-success' : 'status-error';
+					statusText = lastLog.ok ? '成功' : '失败';
+					lastRunTime = formatDate(lastLog.run_at, true);
+				}
+
+				html += `
+				<tr class="${task.active ? '' : 'task-inactive'}">
+					<td class="task-name-cell" title="${task.name}">${task.name}</td>
+					<td>${task.type === 'url' ? 'URL 请求' : 'CURL 命令'}</td>
+					<td>
+						<span class="status-badge ${task.active ? 'status-success' : 'status-pending'}">
+							${task.active ? '已激活' : '已停用'}
+						</span>
+					</td>
+					<td>${task.interval} 分钟</td>
+					<td>
+						${lastLog ?
+						`<span class="status-badge ${statusClass}" title="${lastLog.message}">${statusText}</span> ${lastRunTime}` :
+						'从未执行'
+					}
+					</td>
+					<td class="task-actions-cell">
+						<button class="btn btn-sm" onclick="viewTaskDetail('${task.id}')">
+							<i class="fas fa-info-circle"></i>
+						</button>
+						<button class="btn btn-sm btn-accent" onclick="executeTask('${task.id}')">
+							<i class="fas fa-play"></i>
+						</button>
+						<button class="btn btn-sm btn-secondary" onclick="editTask('${task.id}')">
+							<i class="fas fa-edit"></i>
+						</button>
+						<button class="btn btn-sm btn-danger" onclick="deleteTask('${task.id}')">
+							<i class="fas fa-trash"></i>
+						</button>
+					</td>
+				</tr>`;
+			});
+
+			taskList.innerHTML = html || '<tr><td colspan="6" class="text-center">未找到匹配的任务</td></tr>';
+		}
+
+		// 打开添加任务模态窗口
+		function openAddTaskModal() {
+			document.getElementById('taskModalTitle').textContent = '添加新任务';
+			document.getElementById('taskForm').reset();
+			document.getElementById('taskId').value = '';
+
+			const modal = document.getElementById('taskModal');
+			modal.classList.add('active');
+		}
+
+		// 打开编辑任务模态窗口
+		function editTask(taskId) {
+			const task = tasks.find(t => t.id === taskId);
+			if (!task) return;
+
+			document.getElementById('taskModalTitle').textContent = '编辑任务';
+			document.getElementById('taskId').value = task.id;
+			document.getElementById('taskName').value = task.name;
+			document.getElementById('taskType').value = task.type;
+			document.getElementById('taskUrl').value = task.url;
+			document.getElementById('taskInterval').value = task.interval;
+			document.getElementById('taskActive').checked = task.active;
+			document.getElementById('taskNotify').checked = task.failure_notification !== false;
+
+			if (task.method) document.getElementById('taskMethod').value = task.method;
+			if (task.headers) document.getElementById('taskHeaders').value = JSON.stringify(task.headers, null, 2);
+			if (task.body) document.getElementById('taskBody').value = task.body;
+			if (task.timeout) document.getElementById('taskTimeout').value = task.timeout;
+
+			const taskTypeSelect = document.getElementById('taskType');
+			toggleUrlOptions(taskTypeSelect.value);
+
+			const modal = document.getElementById('taskModal');
+			modal.classList.add('active');
+		}
+
+		// 切换URL选项显示
+		function toggleUrlOptions(type) {
+			const urlOptions = document.getElementById('urlOptions');
+			urlOptions.style.display = type === 'url' ? 'block' : 'none';
+		}
+
+		// 保存任务
+		async function saveTask(event) {
+			event.preventDefault();
+
+			const taskId = document.getElementById('taskId').value;
+			const isEdit = taskId !== '';
+
+			try {
+				let headers = {};
+				const headersText = document.getElementById('taskHeaders').value.trim();
+				if (headersText) {
+					try {
+						headers = JSON.parse(headersText);
+					} catch (e) {
+						showNotification('请求头必须是有效的 JSON 格式', 'error');
+						return;
+					}
+				}
+
+				const taskData = {
+					name: document.getElementById('taskName').value,
+					type: document.getElementById('taskType').value,
+					url: document.getElementById('taskUrl').value,
+					interval: parseInt(document.getElementById('taskInterval').value),
+					active: document.getElementById('taskActive').checked,
+					failure_notification: document.getElementById('taskNotify').checked
+				};
+
+				if (taskData.type === 'url') {
+					taskData.method = document.getElementById('taskMethod').value;
+					taskData.headers = headers;
+
+					const body = document.getElementById('taskBody').value.trim();
+					if (body) taskData.body = body;
+				}
+
+				const timeout = parseInt(document.getElementById('taskTimeout').value);
+				if (timeout) taskData.timeout = timeout;
+
+				let response;
+				if (isEdit) {
+					response = await fetchWithAuth(`${API_BASE}/tasks/${taskId}`, {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify(taskData)
+					});
+				} else {
+					response = await fetchWithAuth(`${API_BASE}/tasks`, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify(taskData)
+					});
+				}
+
+				if (!response.ok) throw new Error('保存任务失败');
+
+				const savedTask = await response.json();
+
+				if (isEdit) {
+					const index = tasks.findIndex(t => t.id === taskId);
+					if (index !== -1) tasks[index] = savedTask;
+				} else {
+					tasks.push(savedTask);
+				}
+
+				renderTasks();
+				updateTaskStats();
+				closeTaskModal();
+				showNotification(`任务${isEdit ? '更新' : '创建'}成功`);
+			} catch (error) {
+				console.error('保存任务失败:', error);
+				showNotification('保存任务失败: ' + error.message, 'error');
+			}
+		}
+
+		// 执行任务
+		async function executeTask(taskId) {
+			try {
+				const response = await fetchWithAuth(`${API_BASE}/tasks/${taskId}/execute`, {
+					method: 'POST'
+				});
+
+				if (!response.ok) throw new Error('执行任务失败');
+
+				const result = await response.json();
+				showNotification(`任务执行${result.ok ? '成功' : '失败'}: ${result.message}`);
+
+				// 更新任务列表
+				await fetchTasks();
+			} catch (error) {
+				console.error('执行任务失败:', error);
+				showNotification('执行任务失败: ' + error.message, 'error');
+			}
+		}
+
+		// 查看任务详情
+		async function viewTaskDetail(taskId) {
+			try {
+				const response = await fetchWithAuth(`${API_BASE}/tasks/${taskId}`);
+				if (!response.ok) throw new Error('获取任务详情失败');
+
+				const task = await response.json();
+
+				document.getElementById('detailModalTitle').textContent = `任务详情: ${task.name}`;
+				document.getElementById('detailId').textContent = task.id;
+				document.getElementById('detailCreated').textContent = formatDate(task.created_at);
+				document.getElementById('detailUpdated').textContent = formatDate(task.updated_at);
+
+				const taskLogs = document.getElementById('taskLogs');
+				if (task.logs && task.logs.length > 0) {
+					let logsHtml = '';
+					task.logs.forEach(log => {
+						logsHtml += `
+							<div class="log-item">
+								<div><strong>时间:</strong> ${formatDate(log.run_at)}</div>
+								<div><strong>状态:</strong> <span class="${log.ok ? 'status-success' : 'status-error'}">${log.ok ? '成功' : '失败'}</span></div>
+								<div><strong>消息:</strong> ${log.message}</div>
+								${log.duration ? `<div><strong>耗时:</strong> ${log.duration}ms</div>` : ''}
+								${log.status ? `<div><strong>状态码:</strong> ${log.status}</div>` : ''}
+							</div>
+						`;
+					});
+					taskLogs.innerHTML = logsHtml;
+				} else {
+					taskLogs.innerHTML = '<div class="text-center">暂无执行记录</div>';
+				}
+
+				const modal = document.getElementById('detailModal');
+				modal.classList.add('active');
+			} catch (error) {
+				console.error('获取任务详情失败:', error);
+				showNotification('获取任务详情失败: ' + error.message, 'error');
+			}
+		}
+
+		// 删除任务
+		async function deleteTask(taskId) {
+			if (!confirm('确定要删除此任务吗？此操作不可恢复。')) return;
+
+			try {
+				const response = await fetchWithAuth(`${API_BASE}/tasks/${taskId}`, {
+					method: 'DELETE'
+				});
+
+				if (!response.ok) throw new Error('删除任务失败');
+
+				tasks = tasks.filter(t => t.id !== taskId);
+				renderTasks();
+				updateTaskStats();
+				showNotification('任务已删除');
+			} catch (error) {
+				console.error('删除任务失败:', error);
+				showNotification('删除任务失败: ' + error.message, 'error');
+			}
+		}
+
+		// 获取通知设置
+		async function fetchNotificationSettings() {
+			try {
+				const response = await fetchWithAuth(`${API_BASE}/notification`);
+				if (!response.ok) throw new Error('获取通知设置失败');
+
+				const data = await response.json();
+				if (data.url) {
+					document.getElementById('notificationUrl').value = data.url;
+				}
+			} catch (error) {
+				console.error('获取通知设置失败:', error);
+			}
+		}
+
+		// 保存通知设置
+		async function saveNotificationSettings(event) {
+			event.preventDefault();
+
+			try {
+				const url = document.getElementById('notificationUrl').value;
+
+				const response = await fetchWithAuth(`${API_BASE}/notification`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ url })
+				});
+
+				if (!response.ok) throw new Error('保存通知设置失败');
+
+				closeSettingsModal();
+				showNotification('通知设置已保存');
+			} catch (error) {
+				console.error('保存通知设置失败:', error);
+				showNotification('保存通知设置失败: ' + error.message, 'error');
+			}
+		}
+
+		// 关闭任务模态窗口
+		function closeTaskModal() {
+			const modal = document.getElementById('taskModal');
+			modal.classList.remove('active');
+		}
+
+		// 关闭详情模态窗口
+		function closeDetailModal() {
+			const modal = document.getElementById('detailModal');
+			modal.classList.remove('active');
+		}
+
+		// 打开设置模态窗口
+		function openSettingsModal() {
+			fetchNotificationSettings();
+			const modal = document.getElementById('settingsModal');
+			modal.classList.add('active');
+		}
+
+		// 关闭设置模态窗口
+		function closeSettingsModal() {
+			const modal = document.getElementById('settingsModal');
+			modal.classList.remove('active');
+		}
+
+		// 格式化日期
+		function formatDate(dateString, shortFormat = false) {
+			const date = new Date(dateString);
+			if (shortFormat) {
+				return date.toLocaleString('zh-CN', {
+					month: '2-digit',
+					day: '2-digit',
+					hour: '2-digit',
+					minute: '2-digit'
+				});
+			}
+			return date.toLocaleString('zh-CN', {
+				year: 'numeric',
+				month: '2-digit',
+				day: '2-digit',
+				hour: '2-digit',
+				minute: '2-digit',
+				second: '2-digit'
+			});
+		}
+
+		// 搜索和过滤功能
+		function setupSearchAndFilters() {
+			const searchInput = document.getElementById('searchTasks');
+			const statusFilter = document.getElementById('statusFilter');
+			const typeFilter = document.getElementById('typeFilter');
+
+			// 添加事件监听器
+			searchInput.addEventListener('input', renderTasks);
+			statusFilter.addEventListener('change', renderTasks);
+			typeFilter.addEventListener('change', renderTasks);
+		}
+
+		// 初始化功能
+		function init() {
+			setupSearchAndFilters();
+
+			// 获取任务列表
+			fetchTasks();
+
+			// 事件监听
+			document.getElementById('addTaskBtn').addEventListener('click', openAddTaskModal);
+			document.getElementById('taskForm').addEventListener('submit', saveTask);
+			document.getElementById('closeTaskModal').addEventListener('click', closeTaskModal);
+			document.getElementById('cancelTaskBtn').addEventListener('click', closeTaskModal);
+			document.getElementById('taskType').addEventListener('change', (e) => toggleUrlOptions(e.target.value));
+
+			document.getElementById('closeDetailModal').addEventListener('click', closeDetailModal);
+			document.getElementById('closeDetailBtn').addEventListener('click', closeDetailModal);
+
+			document.getElementById('settingsForm').addEventListener('submit', saveNotificationSettings);
+			document.getElementById('closeSettingsModal').addEventListener('click', closeSettingsModal);
+			document.getElementById('cancelSettingsBtn').addEventListener('click', closeSettingsModal);
+			document.getElementById('settingsBtn').addEventListener('click', openSettingsModal);
+			document.getElementById('refreshTasksBtn').addEventListener('click', fetchTasks);
+		}
+
+		// 当页面加载完成时启动所有功能
+		window.addEventListener('DOMContentLoaded', function() {
+			// 检查登录状态
+			if (checkLoginStatus()) {
+				initAppAfterLogin();
+			} else {
+				// 尝试从 sessionStorage 获取，适用于用户没有选"记住我"的情况
+				const sessionToken = sessionStorage.getItem('authToken');
+				if (sessionToken) {
+					authToken = sessionToken;
+					initAppAfterLogin();
+				} else {
+					showLoginModal();
+				}
+			}
+
+			// 添加登录表单事件监听
+			document.getElementById('loginForm').addEventListener('submit', handleLogin);
+
+			// 事件监听
+			document.getElementById('addTaskBtn').addEventListener('click', openAddTaskModal);
+			document.getElementById('taskForm').addEventListener('submit', saveTask);
+			document.getElementById('closeTaskModal').addEventListener('click', closeTaskModal);
+			document.getElementById('cancelTaskBtn').addEventListener('click', closeTaskModal);
+			document.getElementById('taskType').addEventListener('change', (e) => toggleUrlOptions(e.target.value));
+
+			document.getElementById('closeDetailModal').addEventListener('click', closeDetailModal);
+			document.getElementById('closeDetailBtn').addEventListener('click', closeDetailModal);
+
+			document.getElementById('settingsForm').addEventListener('submit', saveNotificationSettings);
+			document.getElementById('closeSettingsModal').addEventListener('click', closeSettingsModal);
+			document.getElementById('cancelSettingsBtn').addEventListener('click', closeSettingsModal);
+			document.getElementById('settingsBtn').addEventListener('click', openSettingsModal);
+			document.getElementById('refreshTasksBtn').addEventListener('click', fetchTasks);
+
+			// 添加注销功能
+			const headerActionsDiv = document.querySelector('.action-icons');
+			const logoutBtn = document.createElement('button');
+			logoutBtn.className = 'icon-btn';
+			logoutBtn.title = '退出登录';
+			logoutBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i>';
+			logoutBtn.addEventListener('click', function() {
+				if (confirm('确定要退出登录吗？')) {
+					localStorage.removeItem('authToken');
+					sessionStorage.removeItem('authToken');
+					authToken = null;
+					showLoginModal();
+				}
+			});
+			headerActionsDiv.appendChild(logoutBtn);
+		});
+	</script>
+</body>
+
+</html>
